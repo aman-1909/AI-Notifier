@@ -1,0 +1,51 @@
+import streamlit as st
+import pandas as pd
+import sqlite3
+
+# -----------------------------
+# Setup Database
+# -----------------------------
+conn = sqlite3.connect("backend.db")
+c = conn.cursor()
+
+# Create users table if not exists
+c.execute('''CREATE TABLE IF NOT EXISTS users
+             (id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT,
+              interest TEXT)''')
+conn.commit()
+
+# -----------------------------
+# Sample Policies
+# -----------------------------
+policies = [
+    {"title": "Startup India Seed Fund", "sector": "startup"},
+    {"title": "PM Kisan Samman Nidhi", "sector": "farmer"},
+    {"title": "Digital India Grant", "sector": "tech"},
+]
+df = pd.DataFrame(policies)
+
+# -----------------------------
+# UI
+# -----------------------------
+st.title("AI Policy Notifier - Day 2 (with DB)")
+
+# Registration form
+st.subheader("Register")
+with st.form("register"):
+    name = st.text_input("Your Name")
+    interest = st.selectbox("Your Interest", ["startup", "farmer", "tech"])
+    submitted = st.form_submit_button("Submit")
+    if submitted:
+        c.execute("INSERT INTO users (name, interest) VALUES (?, ?)", (name, interest))
+        conn.commit()
+        st.success(f"✅ Welcome {name}! Registered for {interest} policies.")
+
+# Show all registered users
+st.subheader("Registered Users")
+users_df = pd.read_sql("SELECT * FROM users", conn)
+st.dataframe(users_df)
+
+# Show all policies
+st.subheader("Available Policies")
+st.dataframe(df)
